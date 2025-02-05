@@ -1,0 +1,6 @@
+analysis-api/venv/
+node_modules/
+.next/
+__pycache__/
+analysis-api/.env
+remember_code.txt
