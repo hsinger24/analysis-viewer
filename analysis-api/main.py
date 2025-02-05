@@ -1,0 +1,101 @@
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Dict, Any, Optional, List
+import os
+import pandas as pd
+import numpy as np
+import openai
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import pickle
+import json
+import ast
+import sys
+from io import StringIO
+import contextlib
+import traceback
+from typing import Any, Dict
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import glob
+
+# Loading variables
+load_dotenv()
+
+def load_scripts_from_directory(rag_system, directory="scripts"):
+    """Load all .py files from the scripts directory into the RAG system"""
+    script_files = glob.glob(os.path.join(directory, "*.py"))
+    for script_file in script_files:
+        script_name = os.path.basename(script_file).replace('.py', '')
+        with open(script_file, 'r') as f:
+            script_content = f.read()
+            # Extract docstring if it exists
+            script_lines = script_content.split('\n')
+            description = ""
+            if '"""' in script_content:
+                for line in script_lines:
+                    if '"""' in line:
+                        description = line.replace('"""', '').strip()
+                        break
+            if not description:
+                description = f"Script for {script_name}"
+            print(f"Loading script: {script_name} with description: {description}")  # Debug line
+            rag_system.add_script(script_name, script_content, description)
+
+app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Your Next.js frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Import your RAG system
+from paste import AnalysisRAG, CodeExecutor
+
+# Initialize your RAG system
+rag_system = AnalysisRAG(openai_api_key=os.getenv("openai_api_key"))
+
+# Load scripts after initializing RAG system
+load_scripts_from_directory(rag_system) 
+
+class QueryRequest(BaseModel):
+    query: str
+    input_data: Dict[str, Any] = Field(default_factory=dict)
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "query": "analyze data",
+                "input_data": {
+                    "df": [],
+                    "schema": []
+                }
+            }
+        }
+
+@app.post("/api/analyze")
+@app.post("/api/analyze")
+async def analyze_query(request: QueryRequest):
+    try:
+        print(f"Received query with schema: {request.input_data.get('schema', [])}")
+        results = rag_system.execute_analysis(
+            query=request.query,
+            input_data=request.input_data
+        )
+        return results
+    except Exception as e:
+        print(f"Error in analyze_query: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
