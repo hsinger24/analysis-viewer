@@ -341,26 +341,35 @@ class AnalysisRAG:
             function_code = snippet['code'].strip()
             function_name = snippet['function_name']
 
+            # First define the function
             function_result = self.executor.execute_code(
                 function_code,
-                {'df': df_data, 'schema': schema, **input_data}  # Add schema here
-)
+                {'df': df_data, 'schema': schema, **input_data}
+            )
 
-            step_result = {
-                'name': function_name,
-                'success': function_result['success'],
-                'error': function_result.get('error', None),
-                'output': function_result.get('output', '').strip()
-            }
-
+            # Then execute the function with the data
             if function_result['success']:
-                defined_functions.append(function_name)
-                step_result['status'] = 'Function defined successfully'
-                # Update input_data with new function definitions
-                input_data.update(function_result['results'])
+                execute_code = f"result = {function_name}(df)"
+                execution = self.executor.execute_code(
+                    execute_code,
+                    {'df': pd.DataFrame(df_data), **function_result['results']}
+                )
+                
+                # Store both the function definition and its results
+                step_result = {
+                    'name': function_name,
+                    'success': True,
+                    'output': execution.get('output', ''),
+                    'results': execution.get('results', {}).get('result', None)
+                }
             else:
-                step_result['status'] = 'Failed to define function'
+                step_result = {
+                    'name': function_name,
+                    'success': False,
+                    'error': function_result.get('error', None)
+                }
 
+            defined_functions.append(function_name)
             results['steps'].append(step_result)
 
             if not function_result['success']:
