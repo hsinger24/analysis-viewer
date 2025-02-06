@@ -305,13 +305,10 @@ class AnalysisRAG:
         return json.loads(response.choices[0].message.content)
 
     def execute_analysis(self, query: str, input_data: Dict[str, Any] = None) -> Dict[str, Any]:
-        """End-to-end analysis execution with improved namespace handling"""
         input_data = input_data or {}
-
-        # Extract schema information
         schema = input_data.get('schema', [])
         df_data = input_data.get('df', [])
-
+        
         context = self.query(query)
         ai_response = self.get_ai_response(query, context, schema)
 
@@ -320,13 +317,12 @@ class AnalysisRAG:
             'steps': []
         }
 
-        # Execute any setup code
         if 'setup_code' in ai_response:
             setup_code = ai_response['setup_code'].strip()
             if setup_code:
                 setup_result = self.executor.execute_code(
                     setup_code,
-                    input_data
+                    {'df': df_data, 'schema': schema}
                 )
                 results['setup'] = {
                     'success': setup_result['success'],
@@ -347,8 +343,8 @@ class AnalysisRAG:
 
             function_result = self.executor.execute_code(
                 function_code,
-                input_data
-            )
+                {'df': df_data, 'schema': schema, **input_data}  # Add schema here
+)
 
             step_result = {
                 'name': function_name,
@@ -376,8 +372,8 @@ class AnalysisRAG:
             if execution_code:
                 execution_result = self.executor.execute_code(
                     execution_code,
-                    input_data
-                )
+                    {'df': df_data, 'schema': schema, **input_data}  # Add schema here
+)
 
                 results['execution'] = {
                     'success': execution_result['success'],

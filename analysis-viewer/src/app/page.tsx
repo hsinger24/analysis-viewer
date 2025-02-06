@@ -19,23 +19,16 @@ export default function Home() {
       Papa.parse(file, {
         header: true,
         dynamicTyping: true,
+        skipEmptyLines: true,
         complete: (results) => {
-          if (results.errors && results.errors.length > 0) {
+          if (results.errors.length > 0) {
             alert(`Error parsing CSV: ${results.errors[0].message}`);
             return;
           }
-          if (results.data.length === 0) {
-            alert('The CSV file appears to be empty');
-            return;
-          }
           setCsvData(results.data);
-          // Store column names for display
-          if (results.data.length > 0) {
-            setColumns(Object.keys(results.data[0]));
-          }
+          setColumns(Object.keys(results.data[0] || {}));
         },
         error: (error) => {
-          console.error('Error parsing CSV:', error);
           alert(`Error parsing CSV: ${error.message}`);
         }
       });
