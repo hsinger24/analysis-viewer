@@ -138,20 +138,20 @@ const QueryResults = ({ results }: { results: AnalysisResults }) => {
             {results.execution.success ? (
               <div className="space-y-4">
                 {results.execution.output && (
-                  <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-x-auto whitespace-pre-wrap">
+                  <pre className="bg-gray-50 p-4 rounded-md text-sm text-black">
                     {results.execution.output}
                   </pre>
                 )}
                 {results.execution.results && (
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2">Defined Variables and Objects:</h4>
-                    <div className="grid grid-cols-1 gap-2">
+                  <div className="border rounded-lg p-4 bg-white">
+                    <h4 className="font-medium mb-2 text-lg text-black">Results:</h4>
+                    <div className="grid grid-cols-1 gap-4">
                       {Object.entries(results.execution.results).map(([key, value]) => (
-                        <div key={key} className="flex items-start gap-2 text-sm">
-                          <span className="font-mono bg-gray-100 px-2 py-1 rounded">
-                            {key}:
-                          </span>
-                          <span className="text-gray-600">{String(value)}</span>
+                        <div key={key} className="bg-gray-50 p-4 rounded-lg">
+                          <span className="font-mono font-medium text-black">{key}:</span>
+                          <pre className="mt-2 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
+                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                          </pre>
                         </div>
                       ))}
                     </div>
