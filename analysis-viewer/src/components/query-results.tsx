@@ -148,11 +148,17 @@ const QueryResults = ({ results }: { results: AnalysisResults }) => {
                     <div className="grid grid-cols-1 gap-4">
                       {Object.entries(results.execution.results).map(([key, value]) => (
                         <div key={key} className="bg-gray-50 p-4 rounded-lg">
-                          <span className="font-mono font-medium text-black">{key}:</span>
+                        <span className="font-mono font-medium text-black">{key}:</span>
+                        {typeof value === 'string' && value.startsWith('data:image/png;base64,') ? (
+                          <div className="mt-2">
+                            <img src={value} alt={`Plot: ${key}`} className="max-w-full rounded-lg" />
+                          </div>
+                        ) : (
                           <pre className="mt-2 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
                             {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
                           </pre>
-                        </div>
+                        )}
+                      </div>
                       ))}
                     </div>
                   </div>

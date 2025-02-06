@@ -112,6 +112,17 @@ class CodeExecutor:
                 output = stdout.getvalue()
                 errors = stderr.getvalue()
                 
+                # Convert any matplotlib figures to base64
+                import io
+                import base64
+                for k, v in execution_namespace.items():
+                    if str(type(v).__name__) == 'Figure':
+                        buf = io.BytesIO()
+                        v.savefig(buf, format='png', bbox_inches='tight')
+                        buf.seek(0)
+                        execution_namespace[k] = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}"
+                        buf.close()
+                
                 # Update locals with new definitions
                 self.locals.update({
                     k: v for k, v in execution_namespace.items() 
@@ -341,6 +352,10 @@ class AnalysisRAG:
             function_code = snippet['code'].strip()
             function_name = snippet['function_name']
 
+            # Convert df_data to DataFrame if it's a list
+            if isinstance(df_data, list):
+                df_data = pd.DataFrame(df_data)
+
             # First define the function
             function_result = self.executor.execute_code(
                 function_code,
@@ -379,6 +394,10 @@ class AnalysisRAG:
         if 'execution_code' in ai_response and defined_functions:
             execution_code = ai_response['execution_code'].strip()
             if execution_code:
+                # Convert df_data to DataFrame if it's a list
+                if isinstance(df_data, list):
+                    df_data = pd.DataFrame(df_data)
+
                 execution_result = self.executor.execute_code(
                     execution_code,
                     {'df': df_data, 'schema': schema, **input_data}  # Add schema here
