@@ -57,8 +57,14 @@ app.add_middleware(
 # Import your RAG system
 from paste import AnalysisRAG, CodeExecutor
 
+def get_openai_key():
+    key = os.getenv("OPENAI_API_KEY") or os.getenv("openai_api_key")
+    if not key:
+        raise ValueError("OpenAI API key not found in environment variables")
+    return key
+
 # Initialize your RAG system
-rag_system = AnalysisRAG(openai_api_key=os.getenv("openai_api_key"))
+rag_system = AnalysisRAG(openai_api_key=get_openai_key())
 
 # Load scripts after initializing RAG system
 load_scripts_from_directory(rag_system) 

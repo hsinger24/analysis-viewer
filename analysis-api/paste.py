@@ -21,6 +21,12 @@ from dotenv import load_dotenv
 # Loading variables
 load_dotenv()
 
+def get_openai_key():
+    key = os.getenv("OPENAI_API_KEY") or os.getenv("openai_api_key")
+    if not key:
+        raise ValueError("OpenAI API key not found in environment variables")
+    return key
+
 def generate_sample_data(n_patients=100, days=90):
     # Generate dates
     start_date = datetime(2024, 1, 1)
@@ -161,7 +167,7 @@ class AnalysisRAG:
         """
         Initialize the RAG system with OpenAI API key and storage for scripts and data
         """
-        self.client = openai.OpenAI(api_key=os.getenv("openai_api_key"))
+        self.client = openai.OpenAI(api_key=get_openai_key())
         self.vectorizer = TfidfVectorizer()
         self.scripts = {}  # Store scripts and their descriptions
         self.script_embeddings = None
@@ -307,7 +313,7 @@ class AnalysisRAG:
 
         Generate complete, executable code following the formatting rules exactly."""
 
-        client = openai.OpenAI(api_key=os.getenv("openai_api_key"))
+        client = openai.OpenAI(api_key=get_openai_key())
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[
