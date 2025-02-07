@@ -2,7 +2,9 @@ services:
   - type: web
     name: matclinics-rag-api
     runtime: python3.9
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m spacy download en_core_web_sm
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: openai_api_key
