@@ -270,6 +270,12 @@ class AnalysisRAG:
         - Use parentheses for long lines
         - Keep function definitions simple
 
+        The execution_code must explicitly call each function and store results, like this:
+        transitions = analyze_medication_transitions(df)
+        risks = calculate_risk_metrics(df)
+        summary = generate_summary_report(df)
+        trend_plot = plot_trends(df)
+
         Example of correct formatting:
 
         def analyze_data(df):
@@ -352,31 +358,30 @@ class AnalysisRAG:
             function_code = snippet['code'].strip()
             function_name = snippet['function_name']
 
-            # Convert df_data to DataFrame if it's a list
+            # Convert df_data to DataFrame once at the beginning
             if isinstance(df_data, list):
                 df_data = pd.DataFrame(df_data)
 
-            # First define the function
+            # Define the function
             function_result = self.executor.execute_code(
                 function_code,
                 {'df': df_data, 'schema': schema, **input_data}
             )
 
-            # Then execute the function with the data
             if function_result['success']:
-                execute_code = f"result = {function_name}(df)"
+                # Execute the function immediately
                 execution = self.executor.execute_code(
-                    execute_code,
-                    {'df': pd.DataFrame(df_data), **function_result['results']}
+                    f"result = {function_name}(df)",
+                    {'df': df_data, **function_result['results']}
                 )
                 
-                # Store both the function definition and its results
                 step_result = {
                     'name': function_name,
                     'success': True,
                     'output': execution.get('output', ''),
                     'results': execution.get('results', {}).get('result', None)
                 }
+                input_data.update(execution.get('results', {}))
             else:
                 step_result = {
                     'name': function_name,
@@ -384,9 +389,7 @@ class AnalysisRAG:
                     'error': function_result.get('error', None)
                 }
 
-            defined_functions.append(function_name)
             results['steps'].append(step_result)
-
             if not function_result['success']:
                 return results
 
