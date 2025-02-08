@@ -4,6 +4,8 @@ import { useState } from 'react';
 import QueryResults from '@/components/query-results';
 import Papa from 'papaparse';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export default function Home() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
@@ -38,7 +40,7 @@ export default function Home() {
   const handleAnalyze = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/analyze', {
+      const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
