@@ -28,6 +28,20 @@ matplotlib.use('Agg')
 # Loading variables
 load_dotenv()
 
+def get_allowed_origins() -> List[str]:
+    # Get from environment variable or fall back to default
+    default_origins = [
+        "http://localhost:3000",
+        "https://matclinics-frontend.onrender.com"
+    ]
+    origins_str = os.getenv("ALLOWED_ORIGINS")
+    if origins_str:
+        try:
+            return origins_str.split(",")
+        except Exception:
+            return default_origins
+    return default_origins
+
 def load_scripts_from_directory(rag_system, directory="scripts"):
     """Load all .py files from the scripts directory into the RAG system"""
     script_files = glob.glob(os.path.join(directory, "*.py"))
@@ -53,7 +67,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Your Next.js frontend URL
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
