@@ -83,7 +83,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Origin': 'https://matclinics-frontend.onrender.com'
+          'Origin': 'https://matclinics-frontend.onrender.com'  // Make sure this matches your actual frontend URL
         },
         credentials: 'include',
         body: JSON.stringify({

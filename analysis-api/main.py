@@ -69,12 +69,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://matclinics-frontend.onrender.com",
-        "https://matclinics-rag-api.onrender.com"
+        "https://matclinics-frontend.onrender.com",  # Your current URL
+        "https://matclinics-analysis-viewer.onrender.com",  # Alternative possible URL
+        # Add your actual frontend URL from Render dashboard
     ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 # Import your RAG system
