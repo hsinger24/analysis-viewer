@@ -13,6 +13,19 @@ interface AnalysisResults {
     success: boolean;
     error?: string;
   };
+  steps?: {
+    name: string;
+    success: boolean;
+    output?: string;
+    error?: string;
+    status?: string;
+  }[];
+  execution?: {
+    success: boolean;
+    output?: string;
+    error?: string;
+    results?: Record<string, string | number | boolean | null | Array<unknown>>;
+  };
 }
 
 interface CSVData {
@@ -94,9 +107,9 @@ export default function Home() {
       const data = await response.json();
       console.log('Raw analysis results:', JSON.stringify(data, null, 2));
       setResults(data);
-    } catch (error) {
+    } catch (error: unknown) {  // Add type annotation here
       console.error('Detailed error:', error);
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {  // Type check here
         setResults({
           explanation: 'Analysis timed out - the request took too long to complete',
           setup: { success: false, error: 'Request timeout' }
