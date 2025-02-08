@@ -6,4 +6,9 @@ services:
       pip install --upgrade pip
       pip install -r requirements.txt
       python -m spacy download en_core_web_sm
-      python -m nltk.downloader punk
+      python -m nltk.downloader punkt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: openai_api_key
+        sync: false
+    autoDeploy: true

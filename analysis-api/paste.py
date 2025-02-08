@@ -16,6 +16,11 @@ import traceback
 from typing import Any, Dict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import matplotlib
+
+# Setting matplotlib 
+os.environ['MATPLOTLIB_BACKEND'] = 'Agg'
+matplotlib.use('Agg')
 
 
 # Loading variables
