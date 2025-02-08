@@ -69,7 +69,10 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': 'https://matclinics-frontend.onrender.com'
         },
+        credentials: 'include',
         body: JSON.stringify({
           query: query,
           input_data: {

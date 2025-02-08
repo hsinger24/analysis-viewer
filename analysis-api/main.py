@@ -67,10 +67,14 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_allowed_origins(),
+    allow_origins=[
+        "http://localhost:3000",
+        "https://matclinics-frontend.onrender.com",
+        "https://matclinics-rag-api.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
 # Import your RAG system
