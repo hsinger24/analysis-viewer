@@ -53,6 +53,15 @@ export default function Home() {
   const handleAnalyze = async () => {
     try {
       setLoading(true);
+      console.log('Making request to:', `${API_URL}/api/analyze`);
+      console.log('With data:', {
+        query: query,
+        input_data: {
+          df: csvData || [],
+          schema: columns
+        }
+      });
+  
       const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: {
@@ -68,13 +77,15 @@ export default function Home() {
       });
       
       if (!response.ok) {
+        console.log('Response not OK:', await response.text());
         throw new Error('Analysis failed');
       }
       
       const data = await response.json();
+      console.log('Received response:', data);
       setResults(data);
     } catch (error) {
-      console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Detailed error:', error);
       setResults({
         explanation: 'Error performing analysis',
         setup: { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
