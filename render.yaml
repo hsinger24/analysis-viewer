@@ -1,7 +1,9 @@
 services:
+  # Backend API Service
   - type: web
     name: matclinics-rag-api
     runtime: python3.11
+    rootDirectory: analysis-api  # Make sure this matches your backend directory
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
@@ -9,6 +11,18 @@ services:
       python -m nltk.downloader punkt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: openai_api_key
+      - key: OPENAI_API_KEY  # Changed to standard OpenAI environment variable name
         sync: false
+    autoDeploy: true
+
+  # Frontend Service
+  - type: web
+    name: matclinics-frontend
+    runtime: node
+    rootDirectory: analysis-viewer  # Make sure this matches your frontend directory
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://matclinics-rag-api.onrender.com"
     autoDeploy: true
