@@ -62,6 +62,9 @@ export default function Home() {
         }
       });
   
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: {
@@ -74,7 +77,10 @@ export default function Home() {
             schema: columns
           }
         }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         console.log('Response not OK:', await response.text());
@@ -82,8 +88,6 @@ export default function Home() {
       }
       
       const data = await response.json();
-      console.log('Received response:', data);
-      // Add this new line here 👇
       console.log('Raw analysis results:', JSON.stringify(data, null, 2));
       setResults(data);
     } catch (error) {
