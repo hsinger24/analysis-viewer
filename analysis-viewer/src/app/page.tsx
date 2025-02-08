@@ -1,24 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import QueryResults from '@/components/query-results';
 import Papa from 'papaparse';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-export default function Home() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [csvData, setCsvData] = useState(null);
-  const [fileName, setFileName] = useState('');
-  const [columns, setColumns] = useState([]);
+// Define interfaces for your data structures
+interface AnalysisResults {
+  explanation?: string;
+  setup?: {
+    success: boolean;
+    error?: string;
+  };
+}
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+interface CSVData {
+  [key: string]: any;
+}
+
+export default function Home() {
+  const [query, setQuery] = useState<string>('');
+  const [results, setResults] = useState<AnalysisResults | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [csvData, setCsvData] = useState<CSVData[] | null>(null);
+  const [fileName, setFileName] = useState<string>('');
+  const [columns, setColumns] = useState<string[]>([]);
+
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
-      Papa.parse(file, {
+      Papa.parse<CSVData>(file, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
@@ -61,10 +74,10 @@ export default function Home() {
       const data = await response.json();
       setResults(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
       setResults({
         explanation: 'Error performing analysis',
-        setup: { success: false, error: error.message }
+        setup: { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
       });
     } finally {
       setLoading(false);
@@ -110,7 +123,7 @@ export default function Home() {
             className="w-full p-4 border rounded-lg mb-4 text-black"
             rows={4}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setQuery(e.target.value)}
             placeholder="Enter your analysis query here..."
           />
           <button
