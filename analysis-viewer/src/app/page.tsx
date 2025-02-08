@@ -63,7 +63,7 @@ export default function Home() {
       });
   
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds
 
       const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
@@ -86,8 +86,9 @@ export default function Home() {
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        console.log('Response not OK:', await response.text());
-        throw new Error('Analysis failed');
+        const errorText = await response.text();
+        console.log('Response not OK:', errorText);
+        throw new Error(`Analysis failed: ${errorText}`);
       }
       
       const data = await response.json();
@@ -95,10 +96,17 @@ export default function Home() {
       setResults(data);
     } catch (error) {
       console.error('Detailed error:', error);
-      setResults({
-        explanation: 'Error performing analysis',
-        setup: { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-      });
+      if (error.name === 'AbortError') {
+        setResults({
+          explanation: 'Analysis timed out - the request took too long to complete',
+          setup: { success: false, error: 'Request timeout' }
+        });
+      } else {
+        setResults({
+          explanation: 'Error performing analysis',
+          setup: { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+        });
+      }
     } finally {
       setLoading(false);
     }
