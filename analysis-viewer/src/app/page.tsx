@@ -83,6 +83,8 @@ export default function Home() {
       
       const data = await response.json();
       console.log('Received response:', data);
+      // Add this new line here 👇
+      console.log('Raw analysis results:', JSON.stringify(data, null, 2));
       setResults(data);
     } catch (error) {
       console.error('Detailed error:', error);

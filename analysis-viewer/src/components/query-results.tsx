@@ -32,6 +32,12 @@ interface AnalysisResults {
 }
 
 const QueryResults = ({ results }: { results: AnalysisResults }) => {
+
+  // Add these debug logs
+  console.log('QueryResults received:', results);
+  console.log('Has execution results?', !!results.execution);
+  console.log('Execution results:', results.execution);
+
   if (!results) {
     return (
       <Alert>
@@ -125,7 +131,6 @@ const QueryResults = ({ results }: { results: AnalysisResults }) => {
         </Card>
       )}
 
-      {/* Execution Results */}
       {results.execution && (
         <Card>
           <CardHeader>
@@ -137,6 +142,11 @@ const QueryResults = ({ results }: { results: AnalysisResults }) => {
           <CardContent>
             {results.execution.success ? (
               <div className="space-y-4">
+                {/* Debug output */}
+                <pre className="bg-gray-50 p-4 rounded-md text-sm text-black">
+                  {JSON.stringify(results.execution, null, 2)}
+                </pre>
+                
                 {results.execution.output && (
                   <pre className="bg-gray-50 p-4 rounded-md text-sm text-black">
                     {results.execution.output}
@@ -148,17 +158,17 @@ const QueryResults = ({ results }: { results: AnalysisResults }) => {
                     <div className="grid grid-cols-1 gap-4">
                       {Object.entries(results.execution.results).map(([key, value]) => (
                         <div key={key} className="bg-gray-50 p-4 rounded-lg">
-                        <span className="font-mono font-medium text-black">{key}:</span>
-                        {typeof value === 'string' && value.startsWith('data:image/png;base64,') ? (
-                          <div className="mt-2">
-                            <img src={value} alt={`Plot: ${key}`} className="max-w-full rounded-lg" />
-                          </div>
-                        ) : (
-                          <pre className="mt-2 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
-                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                          </pre>
-                        )}
-                      </div>
+                          <span className="font-mono font-medium text-black">{key}:</span>
+                          {typeof value === 'string' && value.startsWith('data:image/png;base64,') ? (
+                            <div className="mt-2">
+                              <img src={value} alt={`Plot: ${key}`} className="max-w-full rounded-lg" />
+                            </div>
+                          ) : (
+                            <pre className="mt-2 text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
+                              {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                            </pre>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
