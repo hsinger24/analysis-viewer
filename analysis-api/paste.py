@@ -281,11 +281,11 @@ class AnalysisRAG:
         - Use parentheses for long lines
         - Keep function definitions simple
 
-        The execution_code must explicitly call each function and store results, like this:
+        The execution_code must explicitly call each function with 'df' as input and include datetime if needed, like this:
         transitions = analyze_medication_transitions(df)
         risks = calculate_risk_metrics(df)
-        summary = generate_summary_report(df)
-        trend_plot = plot_trends(df)
+        summary = generate_summary_report(df, datetime(2024, 1, 1), datetime(2024, 3, 1))
+        trend_plot = plot_trends(df, 'prescriptions')
 
         Example of correct formatting:
 
@@ -417,8 +417,13 @@ class AnalysisRAG:
 
                 execution_result = self.executor.execute_code(
                     execution_code,
-                    {'df': df_data, 'schema': schema, **input_data}  # Add schema here
-)
+                    {
+                        'df': df_data, 
+                        'schema': schema, 
+                        'datetime': datetime,  # Add this
+                        **input_data
+                    }
+                )
 
                 results['execution'] = {
                     'success': execution_result['success'],
