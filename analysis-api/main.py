@@ -21,6 +21,8 @@ from dotenv import load_dotenv
 import glob
 import matplotlib
 import logging
+import asyncio
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -87,9 +89,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://matclinics-frontend.onrender.com"
+        "https://matclinics-frontend.onrender.com"  # This exactly matches your URL
     ],
-    allow_credentials=True,
+    allow_credentials=False,  # Changed to False since we're not using credentials
     allow_methods=["*"],
     allow_headers=["*"]
 )

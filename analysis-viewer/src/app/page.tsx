@@ -82,8 +82,9 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          'Accept': 'application/json'
         },
+        signal: controller.signal,  // Add this back
         body: JSON.stringify({
           query: query,
           input_data: {
