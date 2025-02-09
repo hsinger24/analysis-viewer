@@ -438,4 +438,9 @@ class AnalysisRAG:
                             cleaned_results[key] = "<Matplotlib Figure>"
                         else:
                             cleaned_results[key] = str(value)
-                    re
+                    results['execution']['results'] = cleaned_results
+
+        return results
+
+
+
