@@ -3,3 +3,5 @@ node_modules/
 .next/
 __pycache__/
 analysis-api/.env
+.DS_Store
+**/.DS_Store

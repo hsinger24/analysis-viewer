@@ -334,12 +334,14 @@ class AnalysisRAG:
 
     async def execute_analysis(self, query: str, input_data: Dict[str, Any] = None) -> Dict[str, Any]:
 
+        print("Starting analysis...")
         input_data = input_data or {}
         schema = input_data.get('schema', [])
         df_data = input_data.get('df', [])
         
         context = self.query(query)
         ai_response = self.get_ai_response(query, context, schema)
+        print("AI Response received:", ai_response)
 
         results = {
             'explanation': ai_response['explanation'],
@@ -406,7 +408,7 @@ class AnalysisRAG:
                 return results
 
         # Execute the final execution code
-        if 'execution_code' in ai_response and defined_functions:
+        if 'execution_code' in ai_response:
             execution_code = ai_response['execution_code'].strip()
             if execution_code:
                 # Convert df_data to DataFrame if it's a list
@@ -436,9 +438,4 @@ class AnalysisRAG:
                             cleaned_results[key] = "<Matplotlib Figure>"
                         else:
                             cleaned_results[key] = str(value)
-                    results['execution']['results'] = cleaned_results
-
-        return results
-
-
-
+                    re
