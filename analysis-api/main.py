@@ -20,6 +20,11 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import glob
 import matplotlib
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Setting matplotlib 
 os.environ['MATPLOTLIB_BACKEND'] = 'Agg'
@@ -28,19 +33,19 @@ matplotlib.use('Agg')
 # Loading variables
 load_dotenv()
 
-def get_allowed_origins() -> List[str]:
-    # Get from environment variable or fall back to default
-    default_origins = [
-        "http://localhost:3000",
-        "https://matclinics-frontend.onrender.com"
-    ]
-    origins_str = os.getenv("ALLOWED_ORIGINS")
-    if origins_str:
-        try:
-            return origins_str.split(",")
-        except Exception:
-            return default_origins
-    return default_origins
+# def get_allowed_origins() -> List[str]:
+#     # Get from environment variable or fall back to default
+#     default_origins = [
+#         "http://localhost:3000",
+#         "https://matclinics-frontend.onrender.com"
+#     ]
+#     origins_str = os.getenv("ALLOWED_ORIGINS")
+#     if origins_str:
+#         try:
+#             return origins_str.split(",")
+#         except Exception:
+#             return default_origins
+#     return default_origins
 
 def load_scripts_from_directory(rag_system, directory="scripts"):
     """Load all .py files from the scripts directory into the RAG system"""
@@ -64,18 +69,26 @@ def load_scripts_from_directory(rag_system, directory="scripts"):
 
 app = FastAPI()
 
-# Add CORS middleware
+# Simple logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Add logging middleware
+@app.middleware("http")
+async def log_requests(request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url}")
+    logger.info(f"Request headers: {request.headers}")
+    response = await call_next(request)
+    logger.info(f"Response status: {response.status_code}")
+    return response
+
+# Simple CORS configuration for testing
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://matclinics-frontend.onrender.com",  # Your current URL
-        "https://matclinics-analysis-viewer.onrender.com",  # Alternative possible URL
-        # Add your actual frontend URL from Render dashboard
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins temporarily
+    allow_credentials=False,  # Must be False when using allow_origins=["*"]
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
 # Import your RAG system
