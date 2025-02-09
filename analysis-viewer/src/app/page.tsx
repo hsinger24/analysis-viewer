@@ -67,6 +67,10 @@ export default function Home() {
     try {
       setLoading(true);
       console.log('Making request to:', `${API_URL}/api/analyze`);
+      console.log('Making request to:', `${API_URL}/api/analyze`);
+      console.log('CSV Data Structure:', csvData);  // Add this line
+      console.log('CSV Data First Row:', csvData?.[0]);  // And this line
+      console.log('Columns:', columns);  // And this line
       console.log('With data:', {
         query: query,
         input_data: {
