@@ -333,11 +333,40 @@ class AnalysisRAG:
         return json.loads(response.choices[0].message.content)
 
     async def execute_analysis(self, query: str, input_data: Dict[str, Any] = None) -> Dict[str, Any]:
-
         print("Starting analysis...")
         input_data = input_data or {}
         schema = input_data.get('schema', [])
         df_data = input_data.get('df', [])
+        
+        # Convert data to DataFrame with proper date handling
+        try:
+            if isinstance(df_data, list) and df_data:
+                # Convert date strings to datetime objects
+                for row in df_data:
+                    for key, value in row.items():
+                        # Convert any date-like strings to datetime
+                        if isinstance(value, str):
+                            try:
+                                if 'date' in key.lower() or 'time' in key.lower():
+                                    row[key] = pd.to_datetime(value)
+                            except (ValueError, TypeError):
+                                pass  # Keep original value if conversion fails
+                
+                # Convert list to DataFrame
+                df_data = pd.DataFrame(df_data)
+                
+                # Ensure numeric columns are properly typed
+                for col in df_data.columns:
+                    if col == 'patient_id':
+                        df_data[col] = pd.to_numeric(df_data[col], errors='ignore')
+                    elif col == 'dosage':
+                        df_data[col] = pd.to_numeric(df_data[col], errors='coerce')
+        except Exception as e:
+            print(f"Error converting data to DataFrame: {str(e)}")
+            return {
+                'explanation': "Error converting input data to proper format",
+                'setup': {'success': False, 'error': str(e)}
+            }
         
         context = self.query(query)
         ai_response = self.get_ai_response(query, context, schema)
@@ -371,10 +400,6 @@ class AnalysisRAG:
         for snippet in ai_response['code_snippets']:
             function_code = snippet['code'].strip()
             function_name = snippet['function_name']
-
-            # Convert df_data to DataFrame once at the beginning
-            if isinstance(df_data, list):
-                df_data = pd.DataFrame(df_data)
 
             # Define the function
             function_result = self.executor.execute_code(
@@ -411,16 +436,12 @@ class AnalysisRAG:
         if 'execution_code' in ai_response:
             execution_code = ai_response['execution_code'].strip()
             if execution_code:
-                # Convert df_data to DataFrame if it's a list
-                if isinstance(df_data, list):
-                    df_data = pd.DataFrame(df_data)
-
                 execution_result = self.executor.execute_code(
                     execution_code,
                     {
                         'df': df_data, 
                         'schema': schema, 
-                        'datetime': datetime,  # Add this
+                        'datetime': datetime,
                         **input_data
                     }
                 )
@@ -440,7 +461,7 @@ class AnalysisRAG:
                         elif isinstance(value, (pd.DataFrame, pd.Series)):
                             cleaned_results[key] = f"<DataFrame with shape {value.shape}>"
                         elif str(type(value).__name__) == 'Figure':
-                            cleaned_results[key] = "<Matplotlib Figure>"
+                            cleaned_results[key] = value  # Keep the base64 image as is
                         else:
                             cleaned_results[key] = str(value)
                     results['execution']['results'] = cleaned_results
