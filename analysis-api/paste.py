@@ -332,7 +332,8 @@ class AnalysisRAG:
 
         return json.loads(response.choices[0].message.content)
 
-    def execute_analysis(self, query: str, input_data: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def execute_analysis(self, query: str, input_data: Dict[str, Any] = None) -> Dict[str, Any]:
+
         input_data = input_data or {}
         schema = input_data.get('schema', [])
         df_data = input_data.get('df', [])

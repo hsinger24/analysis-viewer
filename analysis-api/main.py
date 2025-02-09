@@ -129,16 +129,11 @@ class QueryRequest(BaseModel):
 async def analyze_query(request: QueryRequest):
     try:
         print(f"Received query with schema: {request.input_data.get('schema', [])}")
-        results = await asyncio.wait_for(
-            rag_system.execute_analysis(
-                query=request.query,
-                input_data=request.input_data
-            ),
-            timeout=55.0  # 55 seconds timeout
+        results = await rag_system.execute_analysis(
+            query=request.query,
+            input_data=request.input_data
         )
         return results
-    except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="Analysis timed out")
     except Exception as e:
         print(f"Error in analyze_query: {str(e)}")
         traceback.print_exc()
