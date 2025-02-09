@@ -85,8 +85,11 @@ async def log_requests(request, call_next):
 # Simple CORS configuration for testing
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily
-    allow_credentials=False,  # Must be False when using allow_origins=["*"]
+    allow_origins=[
+        "http://localhost:3000",
+        "https://matclinics-frontend.onrender.com"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
