@@ -170,7 +170,7 @@ async def analyze_query(request: QueryRequest):
             query=request.query,
             input_data=request.input_data
         )
-        # Clean the results before returning
+        # Clean and convert results before returning
         cleaned_results = clean_for_json(results)
         return json.loads(json.dumps(cleaned_results, cls=CustomJSONEncoder))
     except Exception as e:

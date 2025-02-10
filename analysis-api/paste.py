@@ -26,6 +26,8 @@ def clean_for_json(obj):
     """Clean numeric values to make them JSON serializable"""
     import numpy as np
     import pandas as pd
+    from datetime import datetime  # Add this line
+    
     if isinstance(obj, dict):
         return {k: clean_for_json(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -40,8 +42,11 @@ def clean_for_json(obj):
         return clean_for_json(obj.to_dict())
     elif isinstance(obj, pd.DataFrame):
         return clean_for_json(obj.to_dict(orient='records'))
-    else:
-        return obj
+    elif isinstance(obj, datetime):  # Add this block
+        return obj.isoformat()
+    elif isinstance(obj, (pd.Timestamp, np.datetime64)):  # Add this block
+        return pd.Timestamp(obj).isoformat()
+    return obj
 
 
 # Loading variables
