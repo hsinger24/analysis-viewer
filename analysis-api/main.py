@@ -48,15 +48,25 @@ def clean_for_json(obj):
     elif isinstance(obj, (np.integer, np.int64)):
         return int(obj)
     elif isinstance(obj, (np.floating, np.float64)):
-        if np.isnan(obj) or np.isinf(obj):
+        # Handle NaN and Infinity
+        if pd.isna(obj) or np.isinf(obj):
             return None
-        return float(obj)
+        # Handle very large/small floats
+        try:
+            float_val = float(obj)
+            if abs(float_val) > 1e308:  # Max JSON float
+                return str(float_val)
+            return float_val
+        except (OverflowError, ValueError):
+            return str(obj)
     elif isinstance(obj, pd.Series):
         return clean_for_json(obj.to_dict())
     elif isinstance(obj, pd.DataFrame):
         return clean_for_json(obj.to_dict(orient='records'))
     elif isinstance(obj, datetime):
         return obj.isoformat()
+    elif isinstance(obj, (pd.Timestamp, np.datetime64)):
+        return pd.Timestamp(obj).isoformat()
     return obj
 
 
