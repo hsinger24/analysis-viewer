@@ -107,7 +107,7 @@ export default function Home() {
       }
       
       const data = await response.json();
-      console.log('Raw analysis results:', JSON.stringify(data, null, 2));
+      console.log('Raw analysis results:', data);
       setResults(data);
     } catch (error: unknown) {  // Add type annotation here
       console.error('Detailed error:', error);

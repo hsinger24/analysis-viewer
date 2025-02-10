@@ -188,8 +188,9 @@ async def analyze_query(request: QueryRequest):
             query=request.query,
             input_data=request.input_data
         )
+        # Remove double encoding
         return JSONResponse(
-            content=json.loads(render_json(results)),
+            content=json.loads(render_json(results)), 
             media_type="application/json"
         )
     except Exception as e:
