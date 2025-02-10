@@ -22,52 +22,61 @@ import glob
 import matplotlib
 import logging
 import asyncio
+from starlette.responses import JSONResponse 
 
-class CustomJSONEncoder(json.JSONEncoder):
+class NumericJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        if isinstance(obj, pd.DataFrame):
-            return obj.to_dict(orient='records')
-        if isinstance(obj, pd.Series):
-            return obj.to_dict()
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super().default(obj)
-
-def clean_for_json(obj):
-    """Clean numeric values to make them JSON serializable"""
-    if isinstance(obj, dict):
-        return {k: clean_for_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [clean_for_json(x) for x in obj]
-    elif isinstance(obj, (np.integer, np.int64)):
-        return int(obj)
-    elif isinstance(obj, (np.floating, np.float64)):
-        # Handle NaN and Infinity
-        if pd.isna(obj) or np.isinf(obj):
-            return None
-        # Handle very large/small floats
         try:
-            float_val = float(obj)
-            if abs(float_val) > 1e308:  # Max JSON float
-                return str(float_val)
-            return float_val
-        except (OverflowError, ValueError):
+            if isinstance(obj, (pd.DataFrame, pd.Series)):
+                return self._handle_pandas(obj)
+            elif isinstance(obj, np.ndarray):
+                return self._handle_numpy(obj)
+            elif isinstance(obj, (np.integer, np.floating)):
+                return self._handle_numpy_scalar(obj)
+            elif isinstance(obj, datetime):
+                return obj.isoformat()
+            return super().default(obj)
+        except Exception:
+            return None
+            
+    def _handle_pandas(self, obj):
+        if isinstance(obj, pd.DataFrame):
+            return {
+                str(k): self._clean_value(v) 
+                for k, v in obj.to_dict('index').items()
+            }
+        return self._clean_value(obj.to_dict())
+            
+    def _handle_numpy(self, obj):
+        return [self._clean_value(x) for x in obj.tolist()]
+        
+    def _handle_numpy_scalar(self, obj):
+        if np.isnan(obj) or np.isinf(obj):
+            return None
+        try:
+            value = float(obj)
+            if abs(value) > 1e308:
+                return str(value)
+            return value
+        except:
             return str(obj)
-    elif isinstance(obj, pd.Series):
-        return clean_for_json(obj.to_dict())
-    elif isinstance(obj, pd.DataFrame):
-        return clean_for_json(obj.to_dict(orient='records'))
-    elif isinstance(obj, datetime):
-        return obj.isoformat()
-    elif isinstance(obj, (pd.Timestamp, np.datetime64)):
-        return pd.Timestamp(obj).isoformat()
-    return obj
+            
+    def _clean_value(self, obj):
+        if pd.isna(obj) or (
+            isinstance(obj, (float, np.floating)) and 
+            (np.isnan(obj) or np.isinf(obj))
+        ):
+            return None
+        if isinstance(obj, dict):
+            return {str(k): self._clean_value(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [self._clean_value(x) for x in obj]
+        if isinstance(obj, (np.integer, np.floating)):
+            return self._handle_numpy_scalar(obj)
+        return obj
+
+def render_json(obj):
+    return json.dumps(obj, cls=NumericJSONEncoder)
 
 
 
@@ -175,14 +184,14 @@ class QueryRequest(BaseModel):
 @app.post("/api/analyze")
 async def analyze_query(request: QueryRequest):
     try:
-        print(f"Received query with schema: {request.input_data.get('schema', [])}")
         results = await rag_system.execute_analysis(
             query=request.query,
             input_data=request.input_data
         )
-        # Clean and convert results before returning
-        cleaned_results = clean_for_json(results)
-        return json.loads(json.dumps(cleaned_results, cls=CustomJSONEncoder))
+        return JSONResponse(
+            content=json.loads(render_json(results)),
+            media_type="application/json"
+        )
     except Exception as e:
         print(f"Error in analyze_query: {str(e)}")
         traceback.print_exc()

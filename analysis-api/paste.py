@@ -17,41 +17,11 @@ from typing import Any, Dict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import matplotlib
+from main import render_json
 
 # Setting matplotlib 
 os.environ['MATPLOTLIB_BACKEND'] = 'Agg'
 matplotlib.use('Agg')
-
-def clean_for_json(obj):
-    """Clean numeric values to make them JSON serializable"""
-    if isinstance(obj, dict):
-        return {k: clean_for_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [clean_for_json(x) for x in obj]
-    elif isinstance(obj, (np.integer, np.int64)):
-        return int(obj)
-    elif isinstance(obj, (np.floating, np.float64)):
-        # Handle NaN and Infinity
-        if pd.isna(obj) or np.isinf(obj):
-            return None
-        # Handle very large/small floats
-        try:
-            float_val = float(obj)
-            if abs(float_val) > 1e308:  # Max JSON float
-                return str(float_val)
-            return float_val
-        except (OverflowError, ValueError):
-            return str(obj)
-    elif isinstance(obj, pd.Series):
-        return clean_for_json(obj.to_dict())
-    elif isinstance(obj, pd.DataFrame):
-        return clean_for_json(obj.to_dict(orient='records'))
-    elif isinstance(obj, datetime):
-        return obj.isoformat()
-    elif isinstance(obj, (pd.Timestamp, np.datetime64)):
-        return pd.Timestamp(obj).isoformat()
-    return obj
-
 
 # Loading variables
 load_dotenv()
@@ -96,6 +66,26 @@ def generate_sample_data(n_patients=100, days=90):
 # Script execution
 
 class CodeExecutor:
+
+    def preprocess_dataframe(self, df):
+        if not isinstance(df, pd.DataFrame):
+            return pd.DataFrame()
+            
+        date_columns = df.select_dtypes(include=['datetime64']).columns
+        for col in date_columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        numeric_columns = df.select_dtypes(include=['float64', 'float32']).columns
+        for col in numeric_columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+            
+        categorical_columns = df.select_dtypes(include=['object', 'category']).columns
+        for col in categorical_columns:
+            df[col] = df[col].astype('category')
+            
+        return df
+
     def __init__(self):
         """Initialize with proper imports in the global namespace"""
         # First import all required modules
@@ -139,12 +129,12 @@ class CodeExecutor:
             sys.stdout, sys.stderr = old_out, old_err
             
     def execute_code(self, code: str, input_data: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Execute code with proper namespace management"""
+        if input_data and 'df' in input_data:
+            input_data['df'] = self.preprocess_dataframe(input_data['df'])
+        
         if input_data:
-            # Update locals with input data
             self.locals.update(input_data)
             
-        # Ensure globals are available in locals
         execution_namespace = {**self.globals, **self.locals}
             
         with self.capture_output() as (stdout, stderr):
@@ -153,7 +143,6 @@ class CodeExecutor:
                 output = stdout.getvalue()
                 errors = stderr.getvalue()
                 
-                # Convert any matplotlib figures to base64
                 import io
                 import base64
                 for k, v in execution_namespace.items():
@@ -164,7 +153,6 @@ class CodeExecutor:
                         execution_namespace[k] = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}"
                         buf.close()
                 
-                # Update locals with new definitions
                 self.locals.update({
                     k: v for k, v in execution_namespace.items() 
                     if not k.startswith('__') and 
@@ -494,7 +482,7 @@ class AnalysisRAG:
                             cleaned_results[key] = value  # Keep the base64 image as is
                         else:
                             # Clean any non-JSON-compliant values
-                            cleaned_results[key] = clean_for_json(value)
+                            cleaned_results[key] = render_json(value)
                     results['execution']['results'] = cleaned_results
         
          # Add the debug section HERE, right before the return statement
@@ -513,7 +501,7 @@ class AnalysisRAG:
                 for k, v in value['results'].items():
                     print(f"  Execution result {k}: {type(v)}")
 
-        return clean_for_json(results)
+        return render_json(results)
 
 
 
