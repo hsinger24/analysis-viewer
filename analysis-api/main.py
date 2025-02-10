@@ -23,6 +23,43 @@ import matplotlib
 import logging
 import asyncio
 
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, pd.DataFrame):
+            return obj.to_dict(orient='records')
+        if isinstance(obj, pd.Series):
+            return obj.to_dict()
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+def clean_for_json(obj):
+    """Clean numeric values to make them JSON serializable"""
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(x) for x in obj]
+    elif isinstance(obj, (np.integer, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64)):
+        if np.isnan(obj) or np.isinf(obj):
+            return None
+        return float(obj)
+    elif isinstance(obj, pd.Series):
+        return clean_for_json(obj.to_dict())
+    elif isinstance(obj, pd.DataFrame):
+        return clean_for_json(obj.to_dict(orient='records'))
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    return obj
+
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -133,7 +170,9 @@ async def analyze_query(request: QueryRequest):
             query=request.query,
             input_data=request.input_data
         )
-        return results
+        # Clean the results before returning
+        cleaned_results = clean_for_json(results)
+        return json.loads(json.dumps(cleaned_results, cls=CustomJSONEncoder))
     except Exception as e:
         print(f"Error in analyze_query: {str(e)}")
         traceback.print_exc()
