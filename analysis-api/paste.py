@@ -492,6 +492,22 @@ class AnalysisRAG:
                             # Clean any non-JSON-compliant values
                             cleaned_results[key] = clean_for_json(value)
                     results['execution']['results'] = cleaned_results
+        
+         # Add the debug section HERE, right before the return statement
+        print("DEBUG: Examining results structure")
+        for key, value in results.items():
+            print(f"Key: {key}")
+            if key == 'steps':
+                for step in value:
+                    print(f"  Step: {step['name']}")
+                    if 'results' in step and step['results'] is not None:
+                        print(f"    Results type: {type(step['results'])}")
+                        if isinstance(step['results'], dict):
+                            for k, v in step['results'].items():
+                                print(f"      {k}: {type(v)}")
+            elif key == 'execution' and value and 'results' in value:
+                for k, v in value['results'].items():
+                    print(f"  Execution result {k}: {type(v)}")
 
         return clean_for_json(results)
 
