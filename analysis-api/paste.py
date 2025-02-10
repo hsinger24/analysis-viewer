@@ -22,6 +22,27 @@ import matplotlib
 os.environ['MATPLOTLIB_BACKEND'] = 'Agg'
 matplotlib.use('Agg')
 
+def clean_for_json(obj):
+    """Clean numeric values to make them JSON serializable"""
+    import numpy as np
+    import pandas as pd
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(x) for x in obj]
+    elif isinstance(obj, (np.integer, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64)):
+        if np.isnan(obj) or np.isinf(obj):
+            return None
+        return float(obj)
+    elif isinstance(obj, pd.Series):
+        return clean_for_json(obj.to_dict())
+    elif isinstance(obj, pd.DataFrame):
+        return clean_for_json(obj.to_dict(orient='records'))
+    else:
+        return obj
+
 
 # Loading variables
 load_dotenv()
@@ -463,10 +484,11 @@ class AnalysisRAG:
                         elif str(type(value).__name__) == 'Figure':
                             cleaned_results[key] = value  # Keep the base64 image as is
                         else:
-                            cleaned_results[key] = str(value)
+                            # Clean any non-JSON-compliant values
+                            cleaned_results[key] = clean_for_json(value)
                     results['execution']['results'] = cleaned_results
 
-        return results
+        return clean_for_json(results)
 
 
 
